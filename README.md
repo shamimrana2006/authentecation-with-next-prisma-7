@@ -1,61 +1,323 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Authentication API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A robust authentication system built with NestJS, Prisma ORM, and PostgreSQL. This project provides a comprehensive user management and authentication solution with role-based access control.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- 🔐 User Authentication System
+- 👥 User Management (CRUD Operations)
+- 🎭 Role-Based Access Control (USER, ADMIN, VENDOR)
+- 📧 Email & Phone Authentication Support
+- 🗄️ PostgreSQL Database with Prisma ORM
+- 🔄 Prisma Adapter for PostgreSQL
+- ✅ Input Validation with class-validator
+- 📝 API Documentation with Swagger
+- 🐳 Docker Support
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+- **Framework**: NestJS 11.x
+- **ORM**: Prisma 7.2.0
+- **Database**: PostgreSQL
+- **Validation**: class-validator & class-transformer
+- **Documentation**: Swagger
+- **Package Manager**: pnpm
 
-```bash
-$ pnpm install
+## Database Schema
+
+### User Model
+
+```prisma
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  phone      String?  @unique
+  name       String
+  password   String
+  avatar     String?
+
+  // Address Information
+  address    String?
+  city       String?
+  state      String?
+  country    String?
+  zipCode    String?
+
+  // Account Status
+  role       Role     @default(USER)
+  isActive   Boolean  @default(true)
+  isVerified Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+  VENDOR
+}
 ```
 
-## Compile and run the project
+## Prerequisites
+
+- Node.js (v18 or higher)
+- pnpm
+- PostgreSQL
+- Docker (optional)
+
+## Installation
+
+1. **Clone the repository**
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+git clone <repository-url>
+cd authentication
 ```
 
-## Run tests
+2. **Install dependencies**
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm install
 ```
+
+3. **Environment Setup**
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/auth_db?schema=public"
+PORT=3000
+```
+
+4. **Database Setup**
+
+Run Prisma migrations:
+
+```bash
+# Run migrations
+pnpm prisma migrate dev
+
+# Generate Prisma Client
+pnpm prisma generate
+```
+
+## Running the Application
+
+```bash
+# Development mode
+pnpm run start:dev
+
+# Development with auto-reload
+pnpm run sdev
+
+# Migrate, generate, and start (all in one)
+pnpm run mgsdev
+
+# Reset database and start fresh
+pnpm run rmgsdev
+
+# Production mode
+pnpm run start:prod
+```
+
+The API will be available at `http://localhost:3000`
+
+## Prisma Service
+
+The Prisma service is configured as a global service that connects to PostgreSQL using the Prisma adapter:
+
+```typescript
+@Global()
+@Injectable()
+export class PrismaService implements OnModuleInit {
+  private readonly prisma: PrismaClient;
+
+  constructor() {
+    const adapter = new PrismaPg({
+      connectionString: process.env.DATABASE_URL,
+    });
+
+    this.prisma = new PrismaClient({ adapter });
+  }
+
+  async onModuleInit() {
+    await this.prisma.$connect();
+    console.log('database connected');
+  }
+}
+```
+
+### Features:
+
+- ✅ Global module - available across the entire application
+- ✅ Auto-connects on module initialization
+- ✅ Uses Prisma PostgreSQL adapter
+- ✅ Connection error handling
+
+## API Endpoints
+
+### User Management
+
+| Method | Endpoint    | Description       |
+| ------ | ----------- | ----------------- |
+| POST   | `/user`     | Create a new user |
+| GET    | `/user`     | Get all users     |
+| GET    | `/user/:id` | Get user by ID    |
+| PATCH  | `/user/:id` | Update user       |
+| DELETE | `/user/:id` | Delete user       |
+
+### Request Examples
+
+**Create User**
+
+```bash
+POST /user
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "name": "John Doe",
+  "password": "securePassword123",
+  "phone": "+1234567890",
+  "role": "USER"
+}
+```
+
+## Project Structure
+
+```
+authentication/
+├── prisma/
+│   ├── schema/
+│   │   ├── schema.prisma       # Main Prisma configuration
+│   │   └── user.prisma         # User model schema
+│   ├── migrations/             # Database migrations
+│   └── generated/              # Generated Prisma client
+├── src/
+│   ├── prisma/
+│   │   └── prisma.service.ts   # Prisma service
+│   ├── user/
+│   │   ├── dto/
+│   │   │   ├── create-user.dto.ts
+│   │   │   └── update-user.dto.ts
+│   │   ├── user.controller.ts
+│   │   ├── user.service.ts
+│   │   └── user.module.ts
+│   ├── app.module.ts
+│   └── main.ts
+├── docker-compose.yml          # Docker configuration
+└── package.json
+```
+
+## Database Commands
+
+```bash
+# Run migrations
+pnpm prisma migrate dev
+
+# Generate Prisma Client
+pnpm prisma generate
+
+# Reset database
+pnpm prisma migrate reset
+
+# Open Prisma Studio (Database GUI)
+pnpm prisma studio
+
+# Check migration status
+pnpm prisma migrate status
+```
+
+## Testing
+
+```bash
+# Unit tests
+pnpm run test
+
+# E2E tests
+pnpm run test:e2e
+
+# Test coverage
+pnpm run test:cov
+
+# Watch mode
+pnpm run test:watch
+```
+
+## Docker Support
+
+Start the application with Docker:
+
+```bash
+docker-compose up -d
+```
+
+## Development Scripts
+
+| Script               | Description                      |
+| -------------------- | -------------------------------- |
+| `pnpm run start`     | Start the application            |
+| `pnpm run start:dev` | Start in watch mode              |
+| `pnpm run sdev`      | Start development server         |
+| `pnpm run mgsdev`    | Migrate, generate & start dev    |
+| `pnpm run rmgsdev`   | Reset, migrate, generate & start |
+| `pnpm run build`     | Build for production             |
+| `pnpm run lint`      | Lint and fix code                |
+| `pnpm run format`    | Format code with Prettier        |
+
+## API Documentation
+
+Once the application is running, access the Swagger documentation at:
+
+```
+http://localhost:3000/api
+```
+
+## User Roles
+
+- **USER**: Standard user with basic permissions
+- **ADMIN**: Administrator with full access
+- **VENDOR**: Vendor-specific permissions
+
+## Security Features
+
+- Password hashing (to be implemented)
+- Email verification flag
+- Account activation status
+- Unique email and phone constraints
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is [UNLICENSED](LICENSE).
+
+## Support
+
+For support, email your-email@example.com or open an issue in the repository.
+
+## Roadmap
+
+- [ ] JWT Authentication
+- [ ] Password hashing with bcrypt
+- [ ] Email verification
+- [ ] Password reset functionality
+- [ ] OAuth2 integration
+- [ ] Rate limiting
+- [ ] API versioning
+- [ ] Refresh tokens
+- [ ] 2FA support
+
+---
+
+Built with ❤️ using NestJS and Prisma
 
 ## Deployment
 
