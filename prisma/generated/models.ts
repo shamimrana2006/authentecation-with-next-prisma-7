@@ -8,5 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/Potato'
+export type * from './models/Service'
 export type * from './models/User'
 export type * from './commonInputTypes'

@@ -1,0 +1,9 @@
+model Potato {
+    id        String   @id @default(cuid())
+    name      String   
+    price     Float
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("potatoes")
+}
